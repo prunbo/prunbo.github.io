@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Monochrome Dashboard</title>
+    <style>
+        /* CSS - Estilização Monocromática */
+        :root {
+            --bg-color: #000000;
+            --text-color: #ffffff;
+            --border-color: #ffffff;
+            --accent-hover: #ffffff;
+            --accent-text-hover: #000000;
+            --card-bg: #000000;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: auto auto;
+            gap: 20px;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .header-widget {
+            grid-column: span 2;
+            border: 1px solid var(--border-color);
+            padding: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .clock-container h1 {
+            font-size: 4rem;
+            font-weight: 200;
+            letter-spacing: -2px;
+        }
+
+        .clock-container p {
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+
+        .widget {
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            background: var(--card-bg);
+        }
+
+        .widget-title {
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            display: block;
+        }
+
+        /* Calendário */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            text-align: center;
+        }
+
+        .calendar-day-head {
+            font-size: 0.6rem;
+            font-weight: bold;
+            padding-bottom: 10px;
+        }
+
+        .calendar-day {
+            font-size: 0.8rem;
+            padding: 8px 0;
+            border: 1px solid transparent;
+        }
+
+        .today {
+            background-color: var(--text-color);
+            color: var(--bg-color);
+            font-weight: bold;
+        }
+
+        /* Notas */
+        .notes-container {
+            display: flex;
+            flex-direction: column;
+            height: 250px;
+        }
+
+        #note-input {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: white;
+            padding: 10px;
+            margin-bottom: 10px;
+            outline: none;
+        }
+
+        #note-input:focus {
+            background: white;
+            color: black;
+        }
+
+        .notes-list {
+            overflow-y: auto;
+            flex-grow: 1;
+            list-style: none;
+        }
+
+        .note-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .delete-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: white;
+            padding: 2px 8px;
+            cursor: pointer;
+            font-size: 0.7rem;
+        }
+
+        .delete-btn:hover {
+            background: white;
+            color: black;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 3px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: #fff; }
+
+        @media (max-width: 600px) {
+            .dashboard { grid-template-columns: 1fr; }
+            .header-widget { grid-column: span 1; flex-direction: column; text-align: center; }
+            .clock-container h1 { font-size: 3rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard">
+        <header class="header-widget">
+            <div class="clock-container">
+                <p id="date-string">Carregando data...</p>
+                <h1 id="clock">00:00:00</h1>
+            </div>
+        </header>
+
+        <section class="widget">
+            <span class="widget-title">Calendário</span>
+            <div class="calendar-grid" id="calendar">
+                </div>
+        </section>
+
+        <section class="widget">
+            <span class="widget-title">Notas Rápidas</span>
+            <div class="notes-container">
+                <input type="text" id="note-input" placeholder="Pressione Enter para adicionar..." maxlength="50">
+                <ul class="notes-list" id="notes-list">
+                    </ul>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        /* JavaScript - Funcionalidades */
+
+        // 1. Relógio em tempo real
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            
+            document.getElementById('clock').textContent = `${hours}:${minutes}:${seconds}`;
+            
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('date-string').textContent = now.toLocaleDateString('pt-BR', options);
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // 2. Calendário Funcional
+        function generateCalendar() {
+            const calendarEl = document.getElementById('calendar');
+            const now = new Date();
+            const month = now.getMonth();
+            const year = now.getFullYear();
+            
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            
+            const daysShort = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
+            
+            // Cabeçalho dos dias
+            daysShort.forEach(day => {
+                const dayHead = document.createElement('div');
+                dayHead.className = 'calendar-day-head';
+                dayHead.textContent = day;
+                calendarEl.appendChild(dayHead);
+            });
+
+            // Espaços vazios antes do dia 1
+            for (let x = 0; x < firstDayIndex; x++) {
+                const emptyDay = document.createElement('div');
+                calendarEl.appendChild(emptyDay);
+            }
+
+            // Dias do mês
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dayEl = document.createElement('div');
+                dayEl.className = 'calendar-day';
+                if (i === now.getDate()) dayEl.classList.add('today');
+                dayEl.textContent = i;
+                calendarEl.appendChild(dayEl);
+            }
+        }
+        generateCalendar();
+
+        // 3. Sistema de Notas com LocalStorage
+        const noteInput = document.getElementById('note-input');
+        const notesList = document.getElementById('notes-list');
+
+        let notes = JSON.parse(localStorage.getItem('my_notes')) || [];
+
+        function renderNotes() {
+            notesList.innerHTML = '';
+            notes.forEach((note, index) => {
+                const li = document.createElement('li');
+                li.className = 'note-item';
+                li.innerHTML = `
+                    <span>${note}</span>
+                    <button class="delete-btn" onclick="deleteNote(${index})">X</button>
+                `;
+                notesList.appendChild(li);
+            });
+        }
+
+        function addNote(text) {
+            if (text.trim() === '') return;
+            notes.push(text);
+            localStorage.setItem('my_notes', JSON.stringify(notes));
+            noteInput.value = '';
+            renderNotes();
+        }
+
+        function deleteNote(index) {
+            notes.splice(index, 1);
+            localStorage.setItem('my_notes', JSON.stringify(notes));
+            renderNotes();
+        }
+
+        noteInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addNote(noteInput.value);
+        });
+
+        renderNotes();
+    </script>
+</body>
+</html>
